@@ -12,3 +12,80 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Region {
+  id    Int     @id @default(autoincrement())
+  name  String
+
+  areas Area[]
+}
+
+model Area {
+  id       Int    @id @default(autoincrement())
+  name     String
+  regionId Int
+
+  region   Region @relation(fields: [regionId], references: [id])
+  territories Territory[]
+}
+
+model Distributor {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model Territory {
+  id     Int    @id @default(autoincrement())
+  name   String
+  areaId Int
+
+  area Area @relation(fields: [areaId], references: [id])
+}
+
+model Retailer {
+  id            Int      @id @default(autoincrement())
+  uid           String   @unique
+  name          String
+  phone         String?
+
+  regionId      Int
+  areaId        Int
+  distributorId Int
+  territoryId   Int
+
+  points        Int?
+  routes        String?
+  notes         String?
+
+  updatedAt     DateTime @updatedAt
+
+  region        Region     @relation(fields: [regionId], references: [id])
+  area          Area       @relation(fields: [areaId], references: [id])
+  distributor   Distributor @relation(fields: [distributorId], references: [id])
+  territory     Territory  @relation(fields: [territoryId], references: [id])
+
+  assignments   SalesRepRetailer[]
+}
+
+model SalesRep {
+  id           Int    @id @default(autoincrement())
+  username     String @unique
+  name         String
+  phone        String
+  passwordHash String
+  role         String @default("sr")
+
+  retailers SalesRepRetailer[]
+}
+
+model SalesRepRetailer {
+  salesRepId Int
+  retailerId Int
+
+  assignedAt DateTime @default(now())
+
+  salesRep SalesRep @relation(fields: [salesRepId], references: [id])
+  retailer Retailer @relation(fields: [retailerId], references: [id])
+
+  @@id([salesRepId, retailerId])
+}
