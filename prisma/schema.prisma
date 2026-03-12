@@ -14,10 +14,11 @@ datasource db {
 }
 
 model Region {
-  id    Int     @id @default(autoincrement())
+  id    Int    @id @default(autoincrement())
   name  String
 
-  areas Area[]
+  areas      Area[]
+  retailers  Retailer[]
 }
 
 model Area {
@@ -26,12 +27,16 @@ model Area {
   regionId Int
 
   region   Region @relation(fields: [regionId], references: [id])
+
   territories Territory[]
+  retailers   Retailer[]
 }
 
 model Distributor {
   id   Int    @id @default(autoincrement())
   name String
+
+  retailers Retailer[]
 }
 
 model Territory {
@@ -40,6 +45,8 @@ model Territory {
   areaId Int
 
   area Area @relation(fields: [areaId], references: [id])
+
+  retailers Retailer[]
 }
 
 model Retailer {
@@ -59,10 +66,10 @@ model Retailer {
 
   updatedAt     DateTime @updatedAt
 
-  region        Region     @relation(fields: [regionId], references: [id])
-  area          Area       @relation(fields: [areaId], references: [id])
+  region        Region      @relation(fields: [regionId], references: [id])
+  area          Area        @relation(fields: [areaId], references: [id])
   distributor   Distributor @relation(fields: [distributorId], references: [id])
-  territory     Territory  @relation(fields: [territoryId], references: [id])
+  territory     Territory   @relation(fields: [territoryId], references: [id])
 
   assignments   SalesRepRetailer[]
 }
