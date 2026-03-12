@@ -1,34 +1,46 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import prisma from "../config/prisma.js";
+import { generateToken } from "../services/jwtService.js";
+
 
 export const login = async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res.status(400).json({ message: "Username and password required" });
+    return res.status(400).json({ message: "Username and password are required" });
   }
 
   try {
-    const user = await prisma.salesRep.findUnique({ where: { username } });
+    //? Find the Sales Rep by username
+    const user = await prisma.salesRep.findUnique({
+      where: { username }
+    });
 
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    //? Compare passwords
+    const isValid = await bcrypt.compare(password, user.passwordHash);
 
-    if (!valid) {
+    if (!isValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET || "retail&secret",
-      { expiresIn: "1h" }
-    );
+    //? Create JWT token
+    const token = generateToken({ id: user.id, username: user.username });
 
-    res.json({ token });
+    //? Respond
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        phone: user.phone
+      }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
