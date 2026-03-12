@@ -14,11 +14,11 @@ datasource db {
 }
 
 model Region {
-  id    Int    @id @default(autoincrement())
-  name  String
+  id   Int    @id @default(autoincrement())
+  name String
 
-  areas      Area[]
-  retailers  Retailer[]
+  areas     Area[]
+  retailers Retailer[]
 }
 
 model Area {
@@ -26,7 +26,7 @@ model Area {
   name     String
   regionId Int
 
-  region   Region @relation(fields: [regionId], references: [id])
+  region Region @relation(fields: [regionId], references: [id])
 
   territories Territory[]
   retailers   Retailer[]
@@ -50,28 +50,28 @@ model Territory {
 }
 
 model Retailer {
-  id            Int      @id @default(autoincrement())
-  uid           String   @unique
-  name          String
-  phone         String?
+  id    Int     @id @default(autoincrement())
+  uid   String  @unique
+  name  String
+  phone String?
 
   regionId      Int
   areaId        Int
   distributorId Int
   territoryId   Int
 
-  points        Int?
-  routes        String?
-  notes         String?
+  points Int?
+  routes String?
+  notes  String?
 
-  updatedAt     DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
-  region        Region      @relation(fields: [regionId], references: [id])
-  area          Area        @relation(fields: [areaId], references: [id])
-  distributor   Distributor @relation(fields: [distributorId], references: [id])
-  territory     Territory   @relation(fields: [territoryId], references: [id])
+  region      Region      @relation(fields: [regionId], references: [id])
+  area        Area        @relation(fields: [areaId], references: [id])
+  distributor Distributor @relation(fields: [distributorId], references: [id])
+  territory   Territory   @relation(fields: [territoryId], references: [id])
 
-  assignments   SalesRepRetailer[]
+  assignments SalesRepRetailer[]
 }
 
 model SalesRep {
