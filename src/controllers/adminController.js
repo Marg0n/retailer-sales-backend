@@ -2,7 +2,7 @@ import fs from "fs";
 import csv from "csv-parser";
 import prisma from "../config/prisma.js";
 
-//* import retailer data
+//* import retailer data (Bulk import CSV)
 export const importRetailers = async (req, res) => {
     const filePath = req.file.path;
 
