@@ -27,35 +27,81 @@ export const getAssignedRetailers = async (req, res) => {
 
 //* Get Retailer detail by id
 export const getRetailerDetails = async (req, res) => {
-  const { uid } = req.params;
+    const { uid } = req.params;
 
-  //? SR id
-  const userId = req.user.id;
+    //? SR id
+    const userId = req.user.id;
 
-  try {
-    const retailer = await prisma.retailer.findFirst({
-      where: {
-        uid,
-        salesRepRetailers: {
-          some: {
-            salesRepId: userId,
-          },
-        },
-      },
-      include: {
-        region: true,
-        area: true,
-        territory: true,
-        distributor: true,
-      },
-    });
+    try {
+        const retailer = await prisma.retailer.findFirst({
+            where: {
+                uid,
+                salesRepRetailers: {
+                    some: {
+                        salesRepId: userId,
+                    },
+                },
+            },
+            include: {
+                region: true,
+                area: true,
+                territory: true,
+                distributor: true,
+            },
+        });
 
-    if (!retailer) {
-      return res.status(404).json({ message: "Retailer not found or not assigned to you" });
+        if (!retailer) {
+            return res.status(404).json({ message: "Retailer not found or not assigned to you" });
+        }
+
+        res.json(retailer);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching retailer details" });
     }
+};
 
-    res.json(retailer);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching retailer details" });
-  }
+//* Update allowed fields
+export const updateRetailer = async (req, res) => {
+    const { uid } = req.params;
+
+    //? SR id
+    const userId = req.user.id;
+
+    const { points, routes, notes } = req.body;
+
+    try {
+        const retailer = await prisma.retailer.findFirst({
+            where: {
+                uid,
+                salesRepRetailers: {
+                    some: {
+                        salesRepId: userId,
+                    },
+                },
+            },
+        });
+
+        if (!retailer) {
+            return res.status(404).json({
+                message: "Retailer not found or not assigned to you",
+            });
+        }
+
+        const updatedRetailer = await prisma.retailer.update({
+            where: {
+                id: retailer.id,
+            },
+            data: {
+                points,
+                routes,
+                notes,
+            },
+        });
+
+        res.json(updatedRetailer);
+    } catch (error) {
+        res.status(500).json({
+            message: "Error updating retailer",
+        });
+    }
 };
