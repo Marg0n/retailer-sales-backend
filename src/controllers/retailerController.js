@@ -1,4 +1,6 @@
 import prisma from "../config/prisma.js";
+import redisClient from "../config/redis.js";
+
 
 //* Paginated assigned retailers
 export const getAssignedRetailers = async (req, res) => {
@@ -21,6 +23,16 @@ export const getAssignedRetailers = async (req, res) => {
         limit = Math.min(parseInt(limit) || 10, 50);
 
         const skip = (page - 1) * limit;
+
+        //? Create cache key
+        const cacheKey = `retailers:${userId}:${page}:${limit}:${search || ""}:${region || ""}:${area || ""}:${distributor || ""}:${territory || ""}`;
+
+        //? Check cache
+        const cachedData = await redisClient.get(cacheKey);
+
+        if (cachedData) {
+            return res.json(JSON.parse(cachedData));
+        }
 
         //? Build dynamic filter
         const where = {
@@ -66,13 +78,21 @@ export const getAssignedRetailers = async (req, res) => {
             prisma.retailer.count({ where }),
         ]);
 
-        res.json({
+        //? record response
+        const response = {
             page,
             limit,
             total,
             totalPages: Math.ceil(total / limit),
             data: retailers,
+        };
+
+        //! Save to Redis (for 5 minutes)
+        await redisClient.set(cacheKey, JSON.stringify(response), {
+            EX: 300,
         });
+
+        res.json(response);
     }
     catch (error) {
 
