@@ -2,42 +2,86 @@ import prisma from "../config/prisma.js";
 
 //* Paginated assigned retailers
 export const getAssignedRetailers = async (req, res) => {
-    const userId = req.user.id;
-    const { page = 1, limit = 10, search, region, area, distributor, territory } = req.query;
 
-    const skip = (page - 1) * limit;
+    try {
+        const userId = req.user.id;
 
-    const where = {
-        assignments: { some: { salesRepId: userId } },
-        ...(search ? { OR: [{ name: { contains: search } }, { uid: { contains: search } }, { phone: { contains: search } }] } : {}),
-        ...(region ? { regionId: parseInt(region) } : {}),
-        ...(area ? { areaId: parseInt(area) } : {}),
-        ...(distributor ? { distributorId: parseInt(distributor) } : {}),
-        ...(territory ? { territoryId: parseInt(territory) } : {}),
-    };
+        let {
+            page = 1,
+            limit = 10,
+            search,
+            region,
+            area,
+            distributor,
+            territory,
+        } = req.query;
 
-    const retailers = await prisma.retailer.findMany({
-        where,
-        skip: Number(skip),
-        take: Number(limit),
+        //? Convert safely to numbers
+        page = Math.max(parseInt(page) || 1, 1);
+        limit = Math.min(parseInt(limit) || 10, 50);
 
-        include: {
-            region: true,
-            area: true,
-            territory: true,
-            distributor: true,
-        },
-    });
+        const skip = (page - 1) * limit;
 
-    const total = await prisma.retailer.count({ where });
+        //? Build dynamic filter
+        const where = {
+            assignments: {
+                some: {
+                    salesRepId: userId,
+                },
+            },
 
-    res.json({
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        data: retailers,
-    });
+            ...(search && {
+                OR: [
+                    { name: { contains: search, mode: "insensitive" } },
+                    { uid: { contains: search, mode: "insensitive" } },
+                    { phone: { contains: search } },
+                ],
+            }),
 
+            ...(region && { regionId: parseInt(region) }),
+            ...(area && { areaId: parseInt(area) }),
+            ...(distributor && { distributorId: parseInt(distributor) }),
+            ...(territory && { territoryId: parseInt(territory) }),
+        };
+
+        //? Fetching data + total count in parallel
+        const [retailers, total] = await Promise.all([
+            prisma.retailer.findMany({
+                where,
+                skip,
+                take: limit,
+
+                include: {
+                    region: true,
+                    area: true,
+                    territory: true,
+                    distributor: true,
+                },
+
+                orderBy: {
+                    name: "asc",
+                },
+            }),
+
+            prisma.retailer.count({ where }),
+        ]);
+
+        res.json({
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            data: retailers,
+        });
+    }
+    catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            message: "Error fetching retailers",
+        });
+    }
 };
 
 //* Get Retailer detail by id
