@@ -8,7 +8,7 @@ export const getAssignedRetailers = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const where = {
-        salesRepRetailers: { some: { salesRepId: userId } },
+        assignments: { some: { salesRepId: userId } },
         ...(search ? { OR: [{ name: { contains: search } }, { uid: { contains: search } }, { phone: { contains: search } }] } : {}),
         ...(region ? { regionId: parseInt(region) } : {}),
         ...(area ? { areaId: parseInt(area) } : {}),
@@ -20,9 +20,24 @@ export const getAssignedRetailers = async (req, res) => {
         where,
         skip: Number(skip),
         take: Number(limit),
+
+        include: {
+            region: true,
+            area: true,
+            territory: true,
+            distributor: true,
+        },
     });
 
-    res.json({ page, limit, data: retailers });
+    const total = await prisma.retailer.count({ where });
+
+    res.json({
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        data: retailers,
+    });
+
 };
 
 //* Get Retailer detail by id
@@ -36,7 +51,7 @@ export const getRetailerDetails = async (req, res) => {
         const retailer = await prisma.retailer.findFirst({
             where: {
                 uid,
-                salesRepRetailers: {
+                assignments: {
                     some: {
                         salesRepId: userId,
                     },
@@ -73,7 +88,7 @@ export const updateRetailer = async (req, res) => {
         const retailer = await prisma.retailer.findFirst({
             where: {
                 uid,
-                salesRepRetailers: {
+                assignments: {
                     some: {
                         salesRepId: userId,
                     },
