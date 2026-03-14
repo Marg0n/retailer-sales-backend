@@ -4,6 +4,6 @@ import { importRetailers } from "../controllers/adminController.js";
 
 const router = express.Router();
 
-router.post("/admin/retailers/import", upload.single("file"), importRetailers);
+router.post("/retailers/import", upload.single("file"), importRetailers);
 
 export default router;

@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.use(protect);
 
-router.get("/retailers", getAssignedRetailers);
-router.get("/retailers/{uid}", getRetailerDetails);
-router.patch("/retailers/{uid}", updateRetailer);
+router.get("/", getAssignedRetailers);
+router.get("/{uid}", getRetailerDetails);
+router.patch("/{uid}", updateRetailer);
 
 export default router;
