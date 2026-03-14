@@ -183,3 +183,7 @@ export const importRetailers = async (req, res) => {
             }
         });
 };
+
+//* Bulk assign retailers
+
+

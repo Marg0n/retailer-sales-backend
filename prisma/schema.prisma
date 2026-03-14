@@ -15,7 +15,7 @@ datasource db {
 
 model Region {
   id   Int    @id @default(autoincrement())
-  name String
+  name String @unique
 
   areas     Area[]
   retailers Retailer[]
@@ -30,11 +30,13 @@ model Area {
 
   territories Territory[]
   retailers   Retailer[]
+
+  @@unique([name, regionId])
 }
 
 model Distributor {
   id   Int    @id @default(autoincrement())
-  name String
+  name String @unique
 
   retailers Retailer[]
 }
@@ -47,6 +49,8 @@ model Territory {
   area Area @relation(fields: [areaId], references: [id])
 
   retailers Retailer[]
+
+  @@unique([name, areaId])
 }
 
 model Retailer {
@@ -64,6 +68,7 @@ model Retailer {
   routes String?
   notes  String?
 
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   region      Region      @relation(fields: [regionId], references: [id])
@@ -72,6 +77,11 @@ model Retailer {
   territory   Territory   @relation(fields: [territoryId], references: [id])
 
   assignments SalesRepRetailer[]
+
+  @@index([regionId])
+  @@index([areaId])
+  @@index([territoryId])
+  @@index([distributorId])
 }
 
 model SalesRep {
