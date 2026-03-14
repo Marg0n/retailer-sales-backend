@@ -30,7 +30,7 @@ build/
 
 # Prisma
 
-prisma/migrations/*
+# prisma/migrations/*
 !prisma/migrations/.keep
 
 # Coverage
