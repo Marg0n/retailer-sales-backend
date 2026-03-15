@@ -1,6 +1,7 @@
 import fs from "fs";
 import csv from "csv-parser";
 import prisma from "../config/prisma.js";
+import redisClient from "../config/redis.js";
 
 //* import retailer data (Bulk import CSV)
 export const importRetailers = async (req, res) => {
@@ -196,9 +197,14 @@ export const bulkAssignRetailers = async (req, res) => {
 
     try {
 
+        const srId = Number(salesRepId);
+
+        //? Removing duplicate UIDs
+        const uniqueUids = [...new Set(retailerUids)];
+
         //? Validate Sales Rep exists
         const salesRep = await prisma.salesRep.findUnique({
-            where: { id: Number(salesRepId) },
+            where: { id: srId },
         });
 
         if (!salesRep) {
@@ -211,7 +217,7 @@ export const bulkAssignRetailers = async (req, res) => {
         const retailers = await prisma.retailer.findMany({
             where: {
                 uid: {
-                    in: retailerUids,
+                    in: uniqueUids,
                 },
             },
             select: {
@@ -228,7 +234,7 @@ export const bulkAssignRetailers = async (req, res) => {
 
         //? Prepare assignments
         const assignments = retailers.map((r) => ({
-            salesRepId: Number(salesRepId),
+            salesRepId: srId,
             retailerId: r.id,
         }));
 
@@ -238,13 +244,21 @@ export const bulkAssignRetailers = async (req, res) => {
             skipDuplicates: true,
         });
 
+        //! assignments changed, cached retailer lists needs to clear 
+        const keys = await redisClient.keys(`retailers:${salesRepId}:*`);
+
+        if (keys.length) {
+            await redisClient.del(...keys);
+        }
+
+
         res.json({
             message: "Retailers assigned successfully",
             assigned: result.count,
-            requested: retailerUids.length,
+            requested: uniqueUids.length,
         });
 
-    } 
+    }
     catch (error) {
 
         console.error(error);
