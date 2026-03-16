@@ -1,8 +1,9 @@
 import fs from "fs";
 import csv from "csv-parser";
+import prisma from "../config/prisma.js";
 
-const csvImportService = async () => {
-    const filePath = req.file.path;
+const csvImportService = async (filePath) => {
+
     const errors = [];
 
     try {
@@ -73,23 +74,25 @@ const csvImportService = async () => {
             skipDuplicates: true,
         });
 
-        const areaRecords = await prisma.area.findMany({
-            where: {
-                OR: [...areas].map((entry) => {
-                    const [name, regionName] = entry.split("|");
+        const areaRecords = await prisma.area.findMany();
 
-                    return {
-                        name,
-                        region: {
-                            name: regionName,
-                        },
-                    };
-                }),
-            },
-            include: {
-                region: true,
-            },
-        });
+        // const areaRecords = await prisma.area.findMany({
+        //     where: {
+        //         OR: [...areas].map((entry) => {
+        //             const [name, regionName] = entry.split("|");
+
+        //             return {
+        //                 name,
+        //                 region: {
+        //                     name: regionName,
+        //                 },
+        //             };
+        //         }),
+        //     },
+        //     include: {
+        //         region: true,
+        //     },
+        // });
 
         const areaMap = new Map();
         areaRecords.forEach((a) =>
@@ -115,13 +118,15 @@ const csvImportService = async () => {
             skipDuplicates: true,
         });
 
-        const territoryRecords = await prisma.territory.findMany({
-            where: {
-                name: {
-                    in: [...territories].map((t) => t.split("|")[0]),
-                },
-            },
-        });
+        const territoryRecords = await prisma.territory.findMany();
+
+        // const territoryRecords = await prisma.territory.findMany({
+        //     where: {
+        //         name: {
+        //             in: [...territories].map((t) => t.split("|")[0]),
+        //         },
+        //     },
+        // });
 
         const territoryMap = new Map();
         territoryRecords.forEach((t) =>
@@ -134,20 +139,22 @@ const csvImportService = async () => {
             skipDuplicates: true,
         });
 
-        const distributorRecords = await prisma.distributor.findMany({
-            where: {
-                name: {
-                    in: [...distributors],
-                },
-            },
-        });
+        const distributorRecords = await prisma.distributor.findMany();
+
+        // const distributorRecords = await prisma.distributor.findMany({
+        //     where: {
+        //         name: {
+        //             in: [...distributors],
+        //         },
+        //     },
+        // });
 
         const distributorMap = new Map();
         distributorRecords.forEach((d) =>
             distributorMap.set(d.name, d.id)
         );
 
-        //* Stream again for retailer inserts
+        //* Inserting retailers in batches by streaming
 
         const BATCH_SIZE = 1000;
         const MAX_PARALLEL = 5;
@@ -165,12 +172,10 @@ const csvImportService = async () => {
                     try {
 
                         if (!row.uid || !row.name || !row.phone) {
-
                             errors.push({
                                 row,
                                 error: "Missing required fields",
                             });
-
                             return;
                         }
 
@@ -215,21 +220,17 @@ const csvImportService = async () => {
 
                             //? Limiting parallel inserts
                             if (insertPromises.length >= MAX_PARALLEL) {
-
                                 await Promise.all(insertPromises);
                                 insertPromises.length = 0;
-
                             }
 
                         }
 
                     } catch (err) {
-
                         errors.push({
                             row,
                             error: err.message,
                         });
-
                     }
 
                 })
@@ -238,7 +239,7 @@ const csvImportService = async () => {
 
                     try {
 
-                        //? Inserting remaining rows
+                        //? Inserting rows
                         if (batch.length > 0) {
 
                             insertPromises.push(
@@ -256,9 +257,7 @@ const csvImportService = async () => {
                         resolve();
 
                     } catch (err) {
-
                         reject(err);
-
                     }
 
                 })
@@ -267,26 +266,22 @@ const csvImportService = async () => {
 
         });
 
-        //? Removing uploaded CSV
         await fs.promises.unlink(filePath);
 
-        return res.json({
+        return {
             message: "Retailers imported successfully",
             failed: errors.length,
             errors,
-        });
+        };
 
     } catch (error) {
 
-        console.error("CSV Import Error:", error);
-
         await fs.promises.unlink(filePath);
 
-        return res.status(500).json({
-            message: "Retailer import failed",
-        });
+        throw error;
 
     }
-}
+
+};
 
 export default csvImportService;
