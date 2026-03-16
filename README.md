@@ -196,16 +196,38 @@ Example request:
 
 ### Admin
 
-`POST` /admin/import
-Import retailers from CSV file.
 
-Request type:
+### **Hierarchy Management**
+The system follows a geographical hierarchy: **Region > Area > Territory**. Distributors are also managed as independent entities for assignment.
 
-- multipart/form-data
-- key: file
+#### **Region APIs**
+- `POST /api/regions` - Create a new region.
+- `GET /api/regions` - List all regions.
+- `PUT /api/regions/:id` - Update region name.
+- `DELETE /api/regions/:id` - Remove a region.
 
-`POST` /admin/assignments/bulk
-Bulk assign retailers to a sales representative.
+#### **Area APIs** (Belongs to a Region)
+- `POST /api/areas` - Create area (requires `regionId`).
+- `GET /api/areas` - List all areas with their parent region data.
+- `PUT /api/areas/:id` - Update area details.
+- `DELETE /api/areas/:id` - Remove an area.
+
+#### **Territory APIs** (Belongs to an Area)
+- `POST /api/territories` - Create territory (requires `areaId`).
+- `GET /api/territories` - List all territories with area details.
+- `PUT /api/territories/:id` - Update territory details.
+- `DELETE /api/territories/:id` - Remove a territory.
+
+#### **Distributor APIs**
+- `POST /api/distributors` - Register a new distributor.
+- `GET /api/distributors` - List all distributors.
+- `PUT /api/distributors/:id` - Update distributor info.
+- `DELETE /api/distributors/:id` - Remove a distributor.
+
+### **Retailer & Operations**
+- `POST /api/retailers/import` - Bulk import retailers via CSV file (uses `multer`).
+- `POST /api/assignments/bulk` - Bulk assign retailers to Sales Representatives.
+
 
 Example request:
 
@@ -216,18 +238,31 @@ Example request:
 }
 ```
 
+
+---
+
+## Data Structure Example (JSON)
+
+**Area Creation:**
+```json
+{
+  "name": "Dhaka North",
+  "regionId": 1
+}
+```
+
 ---
 
 ## Postman Collection
 
 Included endpoints:
 
-`POST` /auth/login
-`GET` /retailers
-`GET` /retailers/:uid
-`PUT` /retailers/:uid
-`POST` /admin/import
-`POST` /admin/assignments/bulk
+- `POST` /auth/login
+- `GET` /retailers
+- `GET` /retailers/:uid
+- `PUT` /retailers/:uid
+- `POST` /admin/import
+- `POST` /admin/assignments/bulk
 
 ### Recommended Postman environment variables:
 
