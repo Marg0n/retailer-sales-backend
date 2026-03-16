@@ -1,7 +1,7 @@
 import express from "express";
 import upload from "../middleware/uploadMiddleware.js";
 import { bulkAssignRetailers, importRetailers } from "../controllers/adminController.js";
-import { authorize } from "../services/jwtService.js";
+import { authorize } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 

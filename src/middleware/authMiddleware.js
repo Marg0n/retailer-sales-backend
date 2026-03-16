@@ -2,20 +2,51 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-export const protect = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const token = authHeader.split(" ")[1];
-
+//* token check
+export const protect = async (req, res, next) => {
     try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            res.status(401);
+            throw new Error("Not authorized");
+        }
+
+        const token = authHeader.split(" ")[1];
+
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
+
+        const salesRep = await prisma.salesRep.findUnique({
+            where: { id: decoded.id },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+            },
+        });
+
+        if (!salesRep) {
+            res.status(401);
+            throw new Error("Not authorized");
+        }
+
+        req.user = salesRep;
         next();
-    } catch (err) {
-        return res.status(401).json({ message: "Invalid token" });
+    } catch (error) {
+        next(error);
     }
+};
+
+
+//* role check
+export const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            res.status(403);
+            return next(new Error("Forbidden"));
+        }
+
+        next();
+    };
 };

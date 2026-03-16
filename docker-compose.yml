@@ -22,7 +22,7 @@ services:
   api:
     build: .
     ports:
-      - "5002:5001"
+      - "5001:5001"
     depends_on:
       - postgres
       - redis
