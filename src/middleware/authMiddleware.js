@@ -42,13 +42,24 @@ export const protect = async (req, res, next) => {
 
 
 //* role check
-export const authorize = (...roles) => {
+export const authorize = (...allowedRoles) => {
     return (req, res, next) => {
-        if (!req.user || !roles.includes(req.user.role)) {
-            res.status(403);
-            return next(new Error("Forbidden access"));
-        }
+        try {
+            if (!req.user) {
+                res.status(401);
+                throw new Error("User not authenticated");
+            }
 
-        next();
+            if (!allowedRoles.includes(req.user.role)) {
+                res.status(403);
+                throw new Error(
+                    `Forbidden access: your role '${req.user.role}' is not allowed`
+                );
+            }
+
+            next();
+        } catch (error) {
+            next(error);
+        }
     };
 };

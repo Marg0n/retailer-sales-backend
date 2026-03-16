@@ -28,13 +28,13 @@
               "    pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test(\"Response has token\", function () {",
-              "    const jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property(\"token\");",
+              "const jsonData = pm.response.json();",
+              "",
+              "pm.test(\"Token exists\", function () {",
+              "  pm.expect(jsonData.token).to.be.a(\"string\").and.not.empty;",
               "});",
               "",
               "pm.test(\"Save token\", function () {",
-              "    const jsonData = pm.response.json();",
               "    pm.environment.set(\"token\", jsonData.token);",
               "});"
             ],
@@ -49,7 +49,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}",
+          "raw": "// {\n//   \"email\": \"sr1@example.com\",\n//   \"password\": \"sr123\"\n// }\n{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -76,26 +76,51 @@
           "listen": "test",
           "script": {
             "exec": [
+              "// pm.test(\"Status code is 200\", function () {",
+              "//   pm.response.to.have.status(200);",
+              "// });",
+              "",
+              "// const jsonData = pm.response.json();",
+              "// const retailers = Array.isArray(jsonData) ? jsonData : jsonData.data;",
+              "",
+              "// pm.test(\"Retailer response is an array\", function () {",
+              "//   pm.expect(retailers).to.be.an(\"array\");",
+              "// });",
+              "",
+              "// pm.test(\"Retailer list returned\", function () {",
+              "//   pm.expect(retailers.length).to.be.greaterThan(0);",
+              "// });",
+              "",
+              "// if (retailers.length > 0) {",
+              "//   pm.environment.set(\"uid\", retailers[0].uid);",
+              "// }",
+              "",
               "pm.test(\"Status code is 200\", function () {",
               "  pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test(\"Response is an array or has data array\", function () {",
-              "  const jsonData = pm.response.json();",
-              "  pm.expect(jsonData).to.exist;",
+              "const jsonData = pm.response.json();",
+              "console.log(\"RETAILER LIST RESPONSE:\", jsonData);",
+              "",
+              "const retailers =",
+              "  Array.isArray(jsonData) ? jsonData :",
+              "  jsonData.data && Array.isArray(jsonData.data) ? jsonData.data :",
+              "  jsonData.retailers && Array.isArray(jsonData.retailers) ? jsonData.retailers :",
+              "  jsonData.data?.retailers && Array.isArray(jsonData.data.retailers) ? jsonData.data.retailers :",
+              "  [];",
+              "",
+              "pm.test(\"Retailer response is an array\", function () {",
+              "  pm.expect(retailers).to.be.an(\"array\");",
               "});",
               "",
               "pm.test(\"Retailer list returned\", function () {",
-              "  const jsonData = pm.response.json();",
+              "  pm.expect(retailers.length).to.be.greaterThan(0);",
+              "});",
               "",
-              "  if (Array.isArray(jsonData)) {",
-              "    pm.expect(jsonData.length).to.be.greaterThan(0);",
-              "    pm.environment.set(\"retailerUid\", jsonData[0].uid);",
-              "  } else if (jsonData.data && Array.isArray(jsonData.data)) {",
-              "    pm.expect(jsonData.data.length).to.be.greaterThan(0);",
-              "    pm.environment.set(\"retailerUid\", jsonData.data[0].uid);",
-              "  }",
-              "});"
+              "if (retailers.length > 0) {",
+              "  pm.environment.set(\"uid\", retailers[0].uid);",
+              "  console.log(\"SAVED uid:\", retailers[0].uid);",
+              "}"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -140,9 +165,12 @@
               "  pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test(\"Retailer has uid\", function () {",
-              "  const jsonData = pm.response.json();",
-              "  pm.expect(jsonData.uid || jsonData.data?.uid).to.eql(pm.environment.get(\"retailerUid\"));",
+              "const jsonData = pm.response.json();",
+              "",
+              "const retailer =  jsonData.data ? jsonData.data : jsonData;",
+              "",
+              "pm.test(\"Retailer has correct uid\", function () {",
+              "  pm.expect(retailer.uid).to.eql(pm.environment.get(\"uid\"));",
               "});"
             ],
             "type": "text/javascript",
@@ -161,7 +189,7 @@
           },
           {
             "key": "Authorization",
-            "value": "Barear {{token}}",
+            "value": "Bearer {{token}}",
             "type": "text"
           }
         ],
@@ -186,18 +214,23 @@
           "script": {
             "exec": [
               "pm.test(\"Status code is 200\", function () {",
-              "  pm.response.to.have.status(200);",
+              "    pm.response.to.have.status(200);",
               "});",
               "",
               "pm.test(\"Retailer updated successfully\", function () {",
-              "  const jsonData = pm.response.json();",
-              "  const retailer = jsonData.data || jsonData;",
+              "    const jsonData = pm.response.json();",
               "",
-              "  pm.expect(retailer.name).to.eql(\"Retailer One Updated\");",
-              "  pm.expect(retailer.phone).to.eql(\"01711111111\");",
-              "  pm.expect(retailer.points).to.eql(150);",
-              "  pm.expect(retailer.routes).to.eql(\"Route B\");",
-              "});"
+              "    // API returns the retailer object at the top-level (but keep compatibility if wrapped in { data })",
+              "    const retailer = jsonData.data || jsonData;",
+              "",
+              "    pm.expect(retailer).to.be.an(\"object\");",
+              "",
+              "    // Validate allowed fields",
+              "    pm.expect(retailer.points, \"points\").to.equal(150);",
+              "    pm.expect(retailer.routes, \"routes\").to.equal(\"Route B\");",
+              "    pm.expect(retailer.notes, \"notes\").to.equal(\"Some note here!\");",
+              "});",
+              ""
             ],
             "type": "text/javascript",
             "packages": {},
@@ -221,7 +254,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Retailer One Updated\",\n  \"phone\": \"01711111111\",\n  \"points\": 150,\n  \"routes\": \"Route B\"\n}"
+          "raw": "{\n  \"points\": 150,\n  \"routes\": \"Route B\",\n  \"notes\": \"Some note here!\"\n}"
         },
         "url": {
           "raw": "{{BASE_URL}}/retailers/{{uid}}",
@@ -231,67 +264,6 @@
           "path": [
             "retailers",
             "{{uid}}"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Bulk import CSV",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 200 or 201\", function () {",
-              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
-              "});",
-              "",
-              "pm.test(\"CSV import completed\", function () {",
-              "  const jsonData = pm.response.json();",
-              "  pm.expect(jsonData).to.exist;",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          },
-          {
-            "key": "Authorization",
-            "value": "Bearer {{token}}",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "formdata",
-          "formdata": [
-            {
-              "key": "file",
-              "type": "file",
-              "uuid": "76dcebef-58a2-4689-b55c-34572416e8f9",
-              "src": "/Users/sokhoriomargondcosta/Documents/file.cvs"
-            }
-          ]
-        },
-        "url": {
-          "raw": "{{BASE_URL}}/admin/retailers/import",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "admin",
-            "retailers",
-            "import"
           ]
         }
       },
@@ -308,8 +280,9 @@
               "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
               "});",
               "",
-              "pm.test(\"Bulk assignment successful\", function () {",
-              "  const jsonData = pm.response.json();",
+              "const jsonData = pm.response.json();",
+              "",
+              "pm.test(\"Bulk assignment response exists\", function () {",
               "  pm.expect(jsonData).to.exist;",
               "});"
             ],
@@ -351,6 +324,68 @@
             "admin",
             "assignments",
             "bulk"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Bulk import CSV",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 or 201\", function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "",
+              "const jsonData = pm.response.json();",
+              "",
+              "pm.test(\"CSV import response exists\", function () {",
+              "  pm.expect(jsonData).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "uuid": "76dcebef-58a2-4689-b55c-34572416e8f9",
+              "src": "/Users/sokhoriomargondcosta/Downloads/Untitled.csv"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/retailers/import",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "admin",
+            "retailers",
+            "import"
           ]
         }
       },

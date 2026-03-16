@@ -178,16 +178,15 @@ Get all retailers.
 Get retailer details by UID.
 
 `PUT` /retailers/:uid
-Update retailer information.
+Update retailers' allowed information.
 
 Example request:
 
 ```json
 {
-  "name": "Retailer One Updated",
-  "phone": "01711111111",
   "points": 150,
-  "routes": "Route B"
+  "routes": "Route B",
+  "notes": "Some note here!"
 }
 ```
 
@@ -197,14 +196,15 @@ Example request:
 Import retailers from CSV file.
 
 Request type:
+
 - multipart/form-data
 - key: file
-
 
 `POST` /admin/assignments/bulk
 Bulk assign retailers to a sales representative.
 
 Example request:
+
 ```json
 {
   "salesRepId": 1,
@@ -225,11 +225,16 @@ Included endpoints:
 `POST` /admin/import
 `POST` /admin/assignments/bulk
 
-
 ### Recommended Postman environment variables:
 
 - baseUrl
 - token
 - uid
 
+---
 
+## Scaling Approach for Backend
+
+The backend is designed to scale efficiently with horizontal deployments. It uses `PostgreSQL` with `Prisma` for optimized queries and `Redis` caching to reduce repeated database calls. Batch operations like CSV imports and bulk assignments are parallelized for large datasets.
+
+Being stateless with `JWT authentication`, multiple instances can run behind a load balancer. Endpoints support pagination, filtering, and search to prevent overload. Containerization with `Docker` ensures consistent deployments and smooth scaling.

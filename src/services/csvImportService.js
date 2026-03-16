@@ -1,6 +1,10 @@
 import fs from "fs";
 import csv from "csv-parser";
-import prisma from "../config/prisma.js";
+import { PrismaClient } from "@prisma/client";
+
+
+
+const prisma = new PrismaClient();
 
 const csvImportService = async (filePath) => {
     const errors = [];
@@ -134,6 +138,17 @@ const csvImportService = async (filePath) => {
             distributorMap.set(d.name, d.id);
         });
 
+        //? Collecting all rows first 
+        const rows = [];
+
+        await new Promise((resolve, reject) => {
+            fs.createReadStream(filePath)
+                .pipe(csv())
+                .on("data", (row) => rows.push(row))
+                .on("end", resolve)
+                .on("error", reject);
+        });
+
         //? retailer insert in batches by streaming
         const BATCH_SIZE = 1000;
         const MAX_PARALLEL = 5;
@@ -141,97 +156,140 @@ const csvImportService = async (filePath) => {
         let batch = [];
         const insertPromises = [];
 
-        await new Promise((resolve, reject) => {
-            fs.createReadStream(filePath)
-                .pipe(csv())
-                .on("data", async (row) => {
-                    try {
-                        if (!row.uid || !row.name || !row.phone) {
-                            errors.push({
-                                row,
-                                error: "Missing required fields",
-                            });
-                            return;
-                        }
+        // await new Promise((resolve, reject) => {
+        //     fs.createReadStream(filePath)
+        //         .pipe(csv())
+        //         .on("data", async (row) => {
+        //             try {
+        //                 if (!row.uid || !row.name || !row.phone) {
+        //                     errors.push({
+        //                         row,
+        //                         error: "Missing required fields",
+        //                     });
+        //                     return;
+        //                 }
 
-                        const regionName = row.region?.trim();
-                        const areaName = row.area?.trim();
-                        const territoryName = row.territory?.trim();
-                        const distributorName = row.distributor?.trim();
+        //                 const regionName = row.region?.trim();
+        //                 const areaName = row.area?.trim();
+        //                 const territoryName = row.territory?.trim();
+        //                 const distributorName = row.distributor?.trim();
 
-                        const regionId = regionMap.get(regionName);
-                        const areaId = areaMap.get(`${areaName}|${regionId}`);
-                        const territoryId = territoryMap.get(`${territoryName}|${areaId}`);
-                        const distributorId = distributorMap.get(distributorName);
+        //                 const regionId = regionMap.get(regionName);
+        //                 const areaId = areaMap.get(`${areaName}|${regionId}`);
+        //                 const territoryId = territoryMap.get(`${territoryName}|${areaId}`);
+        //                 const distributorId = distributorMap.get(distributorName);
 
-                        if (!regionId || !areaId || !territoryId || !distributorId) {
-                            errors.push({
-                                row,
-                                error: "Invalid region/area/territory/distributor mapping",
-                            });
-                            return;
-                        }
+        //                 if (!regionId || !areaId || !territoryId || !distributorId) {
+        //                     errors.push({
+        //                         row,
+        //                         error: "Invalid region/area/territory/distributor mapping",
+        //                     });
+        //                     return;
+        //                 }
 
-                        batch.push({
-                            uid: row.uid.trim(),
-                            name: row.name.trim(),
-                            phone: row.phone?.trim() || null,
-                            regionId,
-                            areaId,
-                            territoryId,
-                            distributorId,
-                            points: row.points ? Number(row.points) : null,
-                            routes: row.routes?.trim() || null,
-                            notes: row.notes?.trim() || null,
-                        });
+        //                 batch.push({
+        //                     uid: row.uid.trim(),
+        //                     name: row.name.trim(),
+        //                     phone: row.phone?.trim() || null,
+        //                     regionId,
+        //                     areaId,
+        //                     territoryId,
+        //                     distributorId,
+        //                     points: row.points ? Number(row.points) : null,
+        //                     routes: row.routes?.trim() || null,
+        //                     notes: row.notes?.trim() || null,
+        //                 });
 
-                        //? When Batch 
-                        if (batch.length >= BATCH_SIZE) {
-                            const insertBatch = [...batch];
-                            batch = [];
+        //                 //? When Batch 
+        //                 if (batch.length >= BATCH_SIZE) {
+        //                     const insertBatch = [...batch];
+        //                     batch = [];
 
-                            insertPromises.push(
-                                prisma.retailer.createMany({
-                                    data: insertBatch,
-                                    skipDuplicates: true,
-                                })
-                            );
+        //                     insertPromises.push(
+        //                         prisma.retailer.createMany({
+        //                             data: insertBatch,
+        //                             skipDuplicates: true,
+        //                         })
+        //                     );
 
-                            //? Limiting parallel inserts
-                            if (insertPromises.length >= MAX_PARALLEL) {
-                                await Promise.all(insertPromises);
-                                insertPromises.length = 0;
-                            }
-                        }
-                    } catch (err) {
-                        errors.push({
-                            row,
-                            error: err.message,
-                        });
+        //                     //? Limiting parallel inserts
+        //                     if (insertPromises.length >= MAX_PARALLEL) {
+        //                         await Promise.all(insertPromises);
+        //                         insertPromises.length = 0;
+        //                     }
+        //                 }
+        //             } catch (err) {
+        //                 errors.push({
+        //                     row,
+        //                     error: err.message,
+        //                 });
+        //             }
+        //         })
+        //         .on("end", async () => {
+        //             try {
+
+        //                 //? Inserting rows
+        //                 if (batch.length > 0) {
+        //                     insertPromises.push(
+        //                         prisma.retailer.createMany({
+        //                             data: batch,
+        //                             skipDuplicates: true,
+        //                         })
+        //                     );
+        //                 }
+
+        //                 //? Waiting for remaining inserts
+        //                 await Promise.all(insertPromises);
+        //                 resolve();
+        //             } catch (err) {
+        //                 reject(err);
+        //             }
+        //         })
+        //         .on("error", reject);
+        // });
+
+        for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+            const batchRows = rows.slice(i, i + BATCH_SIZE);
+            const batchData = [];
+
+            for (const row of batchRows) {
+                try {
+                    if (!row.uid || !row.name || !row.phone) {
+                        errors.push({ row, error: "Missing required fields" });
+                        continue;
                     }
-                })
-                .on("end", async () => {
-                    try {
 
-                        //? Inserting rows
-                        if (batch.length > 0) {
-                            insertPromises.push(
-                                prisma.retailer.createMany({
-                                    data: batch,
-                                    skipDuplicates: true,
-                                })
-                            );
-                        }
+                    const regionId = regionMap.get(row.region?.trim());
+                    const areaId = areaMap.get(`${row.area?.trim()}|${regionId}`);
+                    const territoryId = territoryMap.get(`${row.territory?.trim()}|${areaId}`);
+                    const distributorId = distributorMap.get(row.distributor?.trim());
 
-                        //? Waiting for remaining inserts
-                        await Promise.all(insertPromises);
-                        resolve();
-                    } catch (err) {
-                        reject(err);
+                    if (!regionId || !areaId || !territoryId || !distributorId) {
+                        errors.push({ row, error: "Invalid region/area/territory/distributor mapping" });
+                        continue;
                     }
-                })
-                .on("error", reject);
-        });
+
+                    batchData.push({
+                        uid: row.uid.trim(),
+                        name: row.name.trim(),
+                        phone: row.phone?.trim() || null,
+                        regionId,
+                        areaId,
+                        territoryId,
+                        distributorId,
+                        points: row.points ? Number(row.points) : null,
+                        routes: row.routes?.trim() || null,
+                        notes: row.notes?.trim() || null,
+                    });
+                } catch (err) {
+                    errors.push({ row, error: err.message });
+                }
+            }
+
+            if (batchData.length > 0) {
+                await prisma.retailer.createMany({ data: batchData, skipDuplicates: true });
+            }
+        }
 
         //? unlink / remove file
         await fs.promises.unlink(filePath);
@@ -242,6 +300,7 @@ const csvImportService = async (filePath) => {
             errors,
         };
     } catch (error) {
+        //! to ensure file is removed even on error
         await fs.promises.unlink(filePath);
 
         throw error;
