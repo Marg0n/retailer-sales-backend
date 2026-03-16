@@ -5,184 +5,297 @@ import redisClient from "../config/redis.js";
 
 //* import retailer data (Bulk import CSV)
 export const importRetailers = async (req, res) => {
+
     if (!req.file) {
         return res.status(400).json({ message: "CSV file is required" });
     }
 
     const filePath = req.file.path;
-
-    const retailers = [];
     const errors = [];
 
-    fs.createReadStream(filePath)
-        .pipe(csv())
-        .on("data", (row) => {
-            retailers.push(row);
-        })
-        .on("end", async () => {
-            try {
+    try {
 
-                if (retailers.length === 0) {
-                    return res.status(400).json({ message: "CSV file is empty" });
-                }
+        const regions = new Set();
+        const areas = new Set();
+        const territories = new Set();
+        const distributors = new Set();
 
-                //? Extract unique values
-                const regions = new Set();
-                const areas = new Set();
-                const territories = new Set();
-                const distributors = new Set();
+        //* collect unique entities
+        await new Promise((resolve, reject) => {
 
-                for (const row of retailers) {
+            fs.createReadStream(filePath)
+                .pipe(csv())
+                .on("data", (row) => {
+
                     if (row.region) regions.add(row.region.trim());
 
-                    if (row.area && row.region)
+                    if (row.area && row.region) {
                         areas.add(`${row.area.trim()}|${row.region.trim()}`);
+                    }
 
-                    if (row.territory && row.area)
+                    if (row.territory && row.area) {
                         territories.add(`${row.territory.trim()}|${row.area.trim()}`);
+                    }
 
-                    if (row.distributor)
+                    if (row.distributor) {
                         distributors.add(row.distributor.trim());
-                }
+                    }
 
-                //? Insert Regions
-                await prisma.region.createMany({
-                    data: [...regions].map((name) => ({ name })),
-                    skipDuplicates: true,
-                });
+                })
+                .on("end", resolve)
+                .on("error", reject);
 
-                const regionRecords = await prisma.region.findMany();
+        });
 
-                const regionMap = new Map();
-                regionRecords.forEach((r) => regionMap.set(r.name, r.id));
+        //? Inserting Regions
+        await prisma.region.createMany({
+            data: [...regions].map((name) => ({ name })),
+            skipDuplicates: true,
+        });
 
-                //? INsert areas
-                const areaData = [...areas].map((entry) => {
+        const regionRecords = await prisma.region.findMany({
+            where: {
+                name: {
+                    in: [...regions],
+                },
+            },
+        });
+
+        const regionMap = new Map();
+        regionRecords.forEach((r) => regionMap.set(r.name, r.id));
+
+        //? Inserting Areas
+        const areaData = [...areas].map((entry) => {
+
+            const [name, regionName] = entry.split("|");
+
+            return {
+                name,
+                regionId: regionMap.get(regionName),
+            };
+
+        });
+
+        await prisma.area.createMany({
+            data: areaData,
+            skipDuplicates: true,
+        });
+
+        const areaRecords = await prisma.area.findMany({
+            where: {
+                OR: [...areas].map((entry) => {
                     const [name, regionName] = entry.split("|");
 
                     return {
                         name,
-                        regionId: regionMap.get(regionName),
+                        region: {
+                            name: regionName,
+                        },
                     };
-                });
+                }),
+            },
+            include: {
+                region: true,
+            },
+        });
 
-                await prisma.area.createMany({
-                    data: areaData,
-                    skipDuplicates: true,
-                });
+        const areaMap = new Map();
+        areaRecords.forEach((a) =>
+            areaMap.set(`${a.name}|${a.regionId}`, a.id)
+        );
 
-                const areaRecords = await prisma.area.findMany();
+        //? Inserting Territories
+        const territoryData = [...territories].map((entry) => {
 
-                const areaMap = new Map();
-                areaRecords.forEach((a) =>
-                    areaMap.set(`${a.name}|${a.regionId}`, a.id)
-                );
+            const [name, areaName] = entry.split("|");
 
-                //? Insert Territories
-                const territoryData = [...territories].map((entry) => {
-                    const [name, areaName] = entry.split("|");
+            const area = areaRecords.find((a) => a.name === areaName);
 
-                    const area = areaRecords.find((a) => a.name === areaName);
+            return {
+                name,
+                areaId: area?.id,
+            };
 
-                    return {
-                        name,
-                        areaId: area?.id,
-                    };
-                });
+        });
 
-                await prisma.territory.createMany({
-                    data: territoryData,
-                    skipDuplicates: true,
-                });
+        await prisma.territory.createMany({
+            data: territoryData,
+            skipDuplicates: true,
+        });
 
-                const territoryRecords = await prisma.territory.findMany();
+        const territoryRecords = await prisma.territory.findMany({
+            where: {
+                name: {
+                    in: [...territories].map((t) => t.split("|")[0]),
+                },
+            },
+        });
 
-                const territoryMap = new Map();
-                territoryRecords.forEach((t) =>
-                    territoryMap.set(`${t.name}|${t.areaId}`, t.id)
-                );
+        const territoryMap = new Map();
+        territoryRecords.forEach((t) =>
+            territoryMap.set(`${t.name}|${t.areaId}`, t.id)
+        );
 
-                //? Insert Distributors
-                await prisma.distributor.createMany({
-                    data: [...distributors].map((name) => ({ name })),
-                    skipDuplicates: true,
-                });
+        //? Inserting Distributors
+        await prisma.distributor.createMany({
+            data: [...distributors].map((name) => ({ name })),
+            skipDuplicates: true,
+        });
 
-                const distributorRecords = await prisma.distributor.findMany();
+        const distributorRecords = await prisma.distributor.findMany({
+            where: {
+                name: {
+                    in: [...distributors],
+                },
+            },
+        });
 
-                const distributorMap = new Map();
-                distributorRecords.forEach((d) =>
-                    distributorMap.set(d.name, d.id)
-                );
+        const distributorMap = new Map();
+        distributorRecords.forEach((d) =>
+            distributorMap.set(d.name, d.id)
+        );
 
-                //? Prepare Retailers
+        //* Stream again for retailer inserts
 
-                const retailersToInsert = [];
+        const BATCH_SIZE = 1000;
+        const MAX_PARALLEL = 5;
 
-                for (const row of retailers) {
+        let batch = [];
+        const insertPromises = [];
 
-                    //? Basic missing validation
-                    if (!row.uid || !row.name || !row.phone) {
+        await new Promise((resolve, reject) => {
+
+            fs.createReadStream(filePath)
+                .pipe(csv())
+
+                .on("data", async (row) => {
+
+                    try {
+
+                        if (!row.uid || !row.name || !row.phone) {
+
+                            errors.push({
+                                row,
+                                error: "Missing required fields",
+                            });
+
+                            return;
+                        }
+
+                        const regionId = regionMap.get(row.region?.trim());
+
+                        const areaId = areaMap.get(
+                            `${row.area?.trim()}|${regionId}`
+                        );
+
+                        const territoryId = territoryMap.get(
+                            `${row.territory?.trim()}|${areaId}`
+                        );
+
+                        const distributorId = distributorMap.get(
+                            row.distributor?.trim()
+                        );
+
+                        batch.push({
+                            uid: row.uid.trim(),
+                            name: row.name.trim(),
+                            phone: row.phone.trim(),
+                            regionId,
+                            areaId,
+                            territoryId,
+                            distributorId,
+                            points: Number(row.points || 0),
+                            routes: row.routes || null,
+                        });
+
+                        //? When Batch ready
+                        if (batch.length >= BATCH_SIZE) {
+
+                            const insertBatch = [...batch];
+                            batch = [];
+
+                            insertPromises.push(
+                                prisma.retailer.createMany({
+                                    data: insertBatch,
+                                    skipDuplicates: true,
+                                })
+                            );
+
+                            //? Limiting parallel inserts
+                            if (insertPromises.length >= MAX_PARALLEL) {
+
+                                await Promise.all(insertPromises);
+                                insertPromises.length = 0;
+
+                            }
+
+                        }
+
+                    } catch (err) {
+
                         errors.push({
                             row,
-                            error: "Missing required fields",
+                            error: err.message,
                         });
-                        continue;
+
                     }
 
-                    const regionId = regionMap.get(row.region?.trim());
+                })
 
-                    const areaId = areaMap.get(
-                        `${row.area?.trim()}|${regionId}`
-                    );
+                .on("end", async () => {
 
-                    const territoryId = territoryRecords.find(
-                        (t) => t.name === row.territory && t.areaId === areaId
-                    )?.id;
+                    try {
 
-                    const distributorId = distributorMap.get(
-                        row.distributor?.trim()
-                    );
+                        //? Inserting remaining rows
+                        if (batch.length > 0) {
 
-                    retailersToInsert.push({
-                        uid: row.uid.trim(),
-                        name: row.name.trim(),
-                        phone: row.phone.trim(),
-                        regionId,
-                        areaId,
-                        territoryId,
-                        distributorId,
-                        points: Number(row.points || 0),
-                        routes: row.routes || null,
-                    });
-                }
+                            insertPromises.push(
+                                prisma.retailer.createMany({
+                                    data: batch,
+                                    skipDuplicates: true,
+                                })
+                            );
 
-                //? Bulk insert the retailers
-                const result = await prisma.retailer.createMany({
-                    data: retailersToInsert,
-                    skipDuplicates: true,
-                });
+                        }
 
-                //? Delete uploaded CSV
-                await fs.promises.unlink(filePath);
+                        //? Waiting for remaining inserts
+                        await Promise.all(insertPromises);
 
-                res.json({
-                    inserted: result.count,
-                    failed: errors.length,
-                    totalRows: retailers.length,
-                    errors,
-                });
-            } catch (error) {
+                        resolve();
 
-                console.error("CSV Import Error:", error);
+                    } catch (err) {
 
-                await fs.promises.unlink(filePath);
+                        reject(err);
 
-                res.status(500).json({
-                    message: "Retailer import failed",
-                });
-            }
+                    }
+
+                })
+
+                .on("error", reject);
+
         });
+
+        //? Removing uploaded CSV
+        await fs.promises.unlink(filePath);
+
+        res.json({
+            message: "Retailers imported successfully",
+            failed: errors.length,
+            errors,
+        });
+
+    } catch (error) {
+
+        console.error("CSV Import Error:", error);
+
+        await fs.promises.unlink(filePath);
+
+        res.status(500).json({
+            message: "Retailer import failed",
+        });
+
+    }
+
 };
 
 //* Bulk assign retailers  to SalesRep 
