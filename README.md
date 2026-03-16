@@ -2,6 +2,10 @@
 
 A backend API for managing retailers, sales representatives, assignments, authentication, and bulk retailer import using CSV.
 
+### **Retailer Sales Representative App**
+
+**Goal:** Build the backend for an app that helps Sales Representatives (SRs) sell products to retailers across Bangladesh. Each SR is assigned to a small list of ~70 retailers from a nationwide pool of ~1 million. The backend should focus on **data modeling, performance, and scalability.**
+
 ## Features
 
 - JWT-based authentication
