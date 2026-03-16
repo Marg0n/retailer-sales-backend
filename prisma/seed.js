@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -14,18 +14,20 @@ async function main() {
         create: {
             name: "Admin User",
             email: "admin@example.com",
-            password: adminPassword,
+            phone: "01712345678",
+            passwordHash: adminPassword,
             role: Role.admin,
         },
     });
 
     const salesRep = await prisma.salesRep.upsert({
-        where: { email: "sales@example.com" },
+        where: { email: "sr1@example.com" },
         update: {},
         create: {
             name: "Sales User",
             email: "sr1@example.com",
-            password: srPassword,
+            phone: "01723456789",
+            passwordHash: srPassword,
             role: Role.sr,
         },
     });
@@ -70,7 +72,7 @@ async function main() {
         create: { name: "ABC Distributor" },
     });
 
-    await prisma.retailer.upsert({
+    const retailer = await prisma.retailer.upsert({
         where: { uid: "RTL-001" },
         update: {},
         create: {
@@ -86,8 +88,22 @@ async function main() {
         },
     });
 
+    const salesRepRetailer = await prisma.salesRepRetailer.upsert({
+        where: {
+            salesRepId_retailerId: {
+                salesRepId: salesRep.id,
+                retailerId: retailer.id,
+            },
+        },
+        update: {},
+        create: {
+            salesRepId: salesRep.id,
+            retailerId: retailer.id,
+        },
+    });
+
     console.log("Seed completed");
-    console.log({ admin, salesRep, region, area, territory, distributor });
+    console.log({ admin, salesRep, region, area, territory, distributor, retailer, salesRepRetailer });
 }
 
 main()

@@ -146,7 +146,7 @@ const csvImportService = async (filePath) => {
                 .pipe(csv())
                 .on("data", async (row) => {
                     try {
-                        if (!row.uid || !row.name) {
+                        if (!row.uid || !row.name || !row.phone) {
                             errors.push({
                                 row,
                                 error: "Missing required fields",
