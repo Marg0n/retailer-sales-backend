@@ -1,0 +1,6 @@
+uid,name,phone,region,area,territory,distributor,points,routes,notes
+RTL-001,Retailer One,01700000001,Dhaka,Gulshan,Gulshan-1,ABC Distributor,100,Route A,First retailer note
+RTL-002,Retailer Two,01700000002,Dhaka,Gulshan,Gulshan-2,ABC Distributor,120,Route B,Second retailer note
+RTL-003,Retailer Three,01700000003,Dhaka,Banani,Banani-1,XYZ Distributor,150,Route C,Third retailer note
+RTL-004,Retailer Four,01700000004,Chittagong,Pahartali,Pahartali-1,XYZ Distributor,200,Route D,Fourth retailer note
+RTL-005,Retailer Five,01700000005,Chittagong,Halishahar,Halishahar-1,LMN Distributor,180,Route E,Fifth retailer note
