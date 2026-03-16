@@ -22,10 +22,15 @@ services:
   api:
     build: .
     ports:
-      - "5000:5000"
+      - "5002:5001"
     depends_on:
       - postgres
       - redis
+    environment:
+      PORT: 5001
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/retailer_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: supersecretkey
 
 volumes:
   postgres_data:

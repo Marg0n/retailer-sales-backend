@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  admin
+  sr
+}
+
 model Region {
   id   Int    @id @default(autoincrement())
   name String @unique
@@ -82,15 +87,17 @@ model Retailer {
   @@index([areaId])
   @@index([territoryId])
   @@index([distributorId])
+  @@index([name])
+  @@index([phone])
 }
 
 model SalesRep {
   id           Int    @id @default(autoincrement())
-  username     String @unique
+  email        String @unique
   name         String
   phone        String
   passwordHash String
-  role         String @default("sr")
+  role         Role   @default(sr)
 
   retailers SalesRepRetailer[]
 }
@@ -105,4 +112,5 @@ model SalesRepRetailer {
   retailer Retailer @relation(fields: [retailerId], references: [id])
 
   @@id([salesRepId, retailerId])
+  @@index([retailerId]) //? for improving reverse lookup
 }

@@ -146,7 +146,7 @@ const csvImportService = async (filePath) => {
                 .pipe(csv())
                 .on("data", async (row) => {
                     try {
-                        if (!row.uid || !row.name || !row.phone) {
+                        if (!row.uid || !row.name) {
                             errors.push({
                                 row,
                                 error: "Missing required fields",
@@ -164,16 +164,25 @@ const csvImportService = async (filePath) => {
                         const territoryId = territoryMap.get(`${territoryName}|${areaId}`);
                         const distributorId = distributorMap.get(distributorName);
 
+                        if (!regionId || !areaId || !territoryId || !distributorId) {
+                            errors.push({
+                                row,
+                                error: "Invalid region/area/territory/distributor mapping",
+                            });
+                            return;
+                        }
+
                         batch.push({
                             uid: row.uid.trim(),
                             name: row.name.trim(),
-                            phone: row.phone.trim(),
-                            regionId: regionId || null,
-                            areaId: areaId || null,
-                            territoryId: territoryId || null,
-                            distributorId: distributorId || null,
-                            points: Number(row.points || 0),
+                            phone: row.phone?.trim() || null,
+                            regionId,
+                            areaId,
+                            territoryId,
+                            distributorId,
+                            points: row.points ? Number(row.points) : null,
                             routes: row.routes?.trim() || null,
+                            notes: row.notes?.trim() || null,
                         });
 
                         //? When Batch 

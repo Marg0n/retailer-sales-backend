@@ -1,0 +1,35 @@
+{
+  "info": {
+    "name": "Retailer Sales Backend",
+    "_postman_id": "a7d9f2d1-1111-4444-8888-123456789000",
+    "description": "API collection for retailer sales backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Import Retailers CSV",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/retailers/import",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5001",
+          "path": ["api", "retailers", "import"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

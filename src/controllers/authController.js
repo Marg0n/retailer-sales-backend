@@ -4,16 +4,16 @@ import { generateToken } from "../services/jwtService.js";
 
 
 export const login = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username and password are required" });
+  if (!email || !password) {
+    return res.status(400).json({ message: "email and password are required" });
   }
 
   try {
-    //? Find the Sales Rep by username
+    //? Find the Sales Rep by email
     const user = await prisma.salesRep.findUnique({
-      where: { username }
+      where: { email }
     });
 
     if (!user) {
@@ -28,7 +28,12 @@ export const login = async (req, res) => {
     }
 
     //? Create JWT token
-    const token = generateToken({ id: user.id, username: user.username });
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    });
 
     //? Respond
     res.json({
@@ -36,9 +41,10 @@ export const login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        username: user.username,
+        email: user.email,
         name: user.name,
-        phone: user.phone
+        phone: user.phone,
+        role: user.role
       }
     });
   } catch (err) {
