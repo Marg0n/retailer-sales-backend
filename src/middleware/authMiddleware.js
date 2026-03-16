@@ -1,6 +1,8 @@
+import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const prisma = new PrismaClient();
 
 //* token check
 export const protect = async (req, res, next) => {
@@ -14,7 +16,7 @@ export const protect = async (req, res, next) => {
 
         const token = authHeader.split(" ")[1];
 
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = await jwt.verify(token, JWT_SECRET);
 
         const salesRep = await prisma.salesRep.findUnique({
             where: { id: decoded.id },

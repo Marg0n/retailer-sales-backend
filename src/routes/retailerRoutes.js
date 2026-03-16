@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(protect);
 
 router.get("/", authorize("admin", "sr"), getAssignedRetailers);
-router.get("/{uid}", authorize("admin", "sr"), getRetailerDetails);
-router.patch("/{uid}", authorize("admin", "sr"), updateRetailer);
+router.get("/:uid", authorize("admin", "sr"), getRetailerDetails);
+router.patch("/:uid", authorize("admin", "sr"), updateRetailer);
 
 export default router;

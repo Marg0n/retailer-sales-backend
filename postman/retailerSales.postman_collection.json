@@ -1,32 +1,357 @@
 {
   "info": {
-    "name": "Retailer Sales Backend",
-    "_postman_id": "a7d9f2d1-1111-4444-8888-123456789000",
-    "description": "API collection for retailer sales backend",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "_postman_id": "7bf9e7e4-d6aa-44af-9efb-4cee4b4c28b3",
+    "name": "retailerSales",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "39942434"
   },
   "item": [
     {
-      "name": "Import Retailers CSV",
+      "name": "login",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has token\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property(\"token\");",
+              "});",
+              "",
+              "pm.test(\"Save token\", function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set(\"token\", jsonData.token);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/auth/login",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Paginated assigned retailers",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is an array or has data array\", function () {",
+              "  const jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.exist;",
+              "});",
+              "",
+              "pm.test(\"Retailer list returned\", function () {",
+              "  const jsonData = pm.response.json();",
+              "",
+              "  if (Array.isArray(jsonData)) {",
+              "    pm.expect(jsonData.length).to.be.greaterThan(0);",
+              "    pm.environment.set(\"retailerUid\", jsonData[0].uid);",
+              "  } else if (jsonData.data && Array.isArray(jsonData.data)) {",
+              "    pm.expect(jsonData.data.length).to.be.greaterThan(0);",
+              "    pm.environment.set(\"retailerUid\", jsonData.data[0].uid);",
+              "  }",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/retailers",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "retailers"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Retailer detail",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Retailer has uid\", function () {",
+              "  const jsonData = pm.response.json();",
+              "  pm.expect(jsonData.uid || jsonData.data?.uid).to.eql(pm.environment.get(\"retailerUid\"));",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Barear {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/retailers/{{uid}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "retailers",
+            "{{uid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update allowed fields",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Retailer updated successfully\", function () {",
+              "  const jsonData = pm.response.json();",
+              "  const retailer = jsonData.data || jsonData;",
+              "",
+              "  pm.expect(retailer.name).to.eql(\"Retailer One Updated\");",
+              "  pm.expect(retailer.phone).to.eql(\"01711111111\");",
+              "  pm.expect(retailer.points).to.eql(150);",
+              "  pm.expect(retailer.routes).to.eql(\"Route B\");",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Retailer One Updated\",\n  \"phone\": \"01711111111\",\n  \"points\": 150,\n  \"routes\": \"Route B\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/retailers/{{uid}}",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "retailers",
+            "{{uid}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Bulk import CSV",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 or 201\", function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "",
+              "pm.test(\"CSV import completed\", function () {",
+              "  const jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
         "body": {
           "mode": "formdata",
           "formdata": [
             {
               "key": "file",
               "type": "file",
-              "src": ""
+              "uuid": "76dcebef-58a2-4689-b55c-34572416e8f9",
+              "src": "/Users/sokhoriomargondcosta/Documents/file.cvs"
             }
           ]
         },
         "url": {
-          "raw": "http://localhost:5001/api/retailers/import",
-          "protocol": "http",
-          "host": ["localhost"],
-          "port": "5001",
-          "path": ["api", "retailers", "import"]
+          "raw": "{{BASE_URL}}/admin/retailers/import",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "admin",
+            "retailers",
+            "import"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Assign retailers to SR",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200 or 201\", function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "",
+              "pm.test(\"Bulk assignment successful\", function () {",
+              "  const jsonData = pm.response.json();",
+              "  pm.expect(jsonData).to.exist;",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"salesRepId\": 1,\n  \"retailerUids\": [\"RTL-001\", \"RTL-002\", \"RTL-003\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/assignments/bulk",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "path": [
+            "admin",
+            "assignments",
+            "bulk"
+          ]
         }
       },
       "response": []
