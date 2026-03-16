@@ -12,9 +12,7 @@
         {
           "listen": "prerequest",
           "script": {
-            "exec": [
-              ""
-            ],
+            "exec": [""],
             "type": "text/javascript",
             "packages": {},
             "requests": {}
@@ -58,13 +56,8 @@
         },
         "url": {
           "raw": "{{BASE_URL}}/auth/login",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "auth",
-            "login"
-          ]
+          "host": ["{{BASE_URL}}"],
+          "path": ["auth", "login"]
         }
       },
       "response": []
@@ -144,12 +137,8 @@
         ],
         "url": {
           "raw": "{{BASE_URL}}/retailers",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "retailers"
-          ]
+          "host": ["{{BASE_URL}}"],
+          "path": ["retailers"]
         }
       },
       "response": []
@@ -195,13 +184,8 @@
         ],
         "url": {
           "raw": "{{BASE_URL}}/retailers/{{uid}}",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "retailers",
-            "{{uid}}"
-          ]
+          "host": ["{{BASE_URL}}"],
+          "path": ["retailers", "{{uid}}"]
         }
       },
       "response": []
@@ -258,13 +242,8 @@
         },
         "url": {
           "raw": "{{BASE_URL}}/retailers/{{uid}}",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "retailers",
-            "{{uid}}"
-          ]
+          "host": ["{{BASE_URL}}"],
+          "path": ["retailers", "{{uid}}"]
         }
       },
       "response": []
@@ -317,14 +296,8 @@
         },
         "url": {
           "raw": "{{BASE_URL}}/admin/assignments/bulk",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "admin",
-            "assignments",
-            "bulk"
-          ]
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "assignments", "bulk"]
         }
       },
       "response": []
@@ -379,14 +352,293 @@
         },
         "url": {
           "raw": "{{BASE_URL}}/admin/retailers/import",
-          "host": [
-            "{{BASE_URL}}"
-          ],
-          "path": [
-            "admin",
-            "retailers",
-            "import"
-          ]
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "retailers", "import"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get all Regions",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/regions",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "regions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Region",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dhaka\"\n}" },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/regions",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "regions"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Region",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dhaka Updated\"\n}" },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/regions/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "regions", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Region",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/regions/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "regions", "1"]
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "Get all Areas",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/areas",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "areas"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Area",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Gulshan\",\n  \"regionId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/areas",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "areas"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Area",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Gulshan Updated\",\n  \"regionId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/areas/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "areas", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Area",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/areas/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "areas", "1"]
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "Get all Distributors",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/distributors",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "distributors"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Distributor",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"ABC Distributor\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/distributors",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "distributors"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Distributor",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"ABC Distributor Updated\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/distributors/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "distributors", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Distributor",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/distributors/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "distributors", "1"]
+        }
+      },
+      "response": []
+    },
+
+    {
+      "name": "Get all Territories",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/territories",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "territories"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Territory",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Gulshan-1\",\n  \"areaId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/territories",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "territories"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Territory",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Gulshan-1 Updated\",\n  \"areaId\": 1\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/admin/territories/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "territories", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Territory",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/admin/territories/1",
+          "host": ["{{BASE_URL}}"],
+          "path": ["admin", "territories", "1"]
         }
       },
       "response": []
